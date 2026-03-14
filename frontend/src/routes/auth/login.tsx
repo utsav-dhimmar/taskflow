@@ -1,4 +1,11 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
+import { useForm } from "react-hook-form";
+import type z from "zod";
+
+import { loginAuthLoginPost, readUsersMeAuthMeGet } from "@/api/auth/auth";
+import { loginAuthLoginPostBody } from "@/api/schema";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -9,12 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import type z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginAuthLoginPostBody } from "@/api/schema";
-import { Button } from "@/components/ui/button";
-import { loginAuthLoginPost, readUsersMeAuthMeGet } from "@/api/auth/auth";
 export const Route = createFileRoute("/auth/login")({
   component: RouteComponent,
 });

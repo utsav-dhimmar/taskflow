@@ -1,6 +1,7 @@
-import * as React from "react";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import * as React from "react";
+
 import { Button } from "@/components/ui/button";
 export const Route = createRootRoute({
   component: RootComponent,
