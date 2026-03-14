@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutIndexRouteImport } from './routes/about/index'
 import { Route as MeNameRouteImport } from './routes/me.$name'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
 
 const AboutIndexRoute = AboutIndexRouteImport.update({
   id: '/about/',
@@ -22,29 +23,38 @@ const MeNameRoute = MeNameRouteImport.update({
   path: '/me/$name',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
+  '/auth/login': typeof AuthLoginRoute
   '/me/$name': typeof MeNameRoute
   '/about': typeof AboutIndexRoute
 }
 export interface FileRoutesByTo {
+  '/auth/login': typeof AuthLoginRoute
   '/me/$name': typeof MeNameRoute
   '/about': typeof AboutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/auth/login': typeof AuthLoginRoute
   '/me/$name': typeof MeNameRoute
   '/about/': typeof AboutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/me/$name' | '/about'
+  fullPaths: '/auth/login' | '/me/$name' | '/about'
   fileRoutesByTo: FileRoutesByTo
-  to: '/me/$name' | '/about'
-  id: '__root__' | '/me/$name' | '/about/'
+  to: '/auth/login' | '/me/$name' | '/about'
+  id: '__root__' | '/auth/login' | '/me/$name' | '/about/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthLoginRoute: typeof AuthLoginRoute
   MeNameRoute: typeof MeNameRoute
   AboutIndexRoute: typeof AboutIndexRoute
 }
@@ -65,10 +75,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeNameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  AuthLoginRoute: AuthLoginRoute,
   MeNameRoute: MeNameRoute,
   AboutIndexRoute: AboutIndexRoute,
 }
