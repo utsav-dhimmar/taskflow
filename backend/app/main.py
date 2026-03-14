@@ -56,15 +56,13 @@ app.add_middleware(
     ],
 )
 
-origins: list[str] = ["*"]  # temp , origin must be frontend url
-
 
 app.add_middleware(
     CORSMiddleware,  # ty:ignore[invalid-argument-type]
-    allow_origins=origins,
-    allow_credentials=True,  # temp
-    allow_methods=["*"],  # temp
-    allow_headers=["*"],  # temp
+    allow_origins=setting.FRONTEND_URLS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

@@ -15,10 +15,12 @@ def send_welcome_email(email_to: str, full_name: str):
 @celery_app.task
 def send_login_email(user_info: dict[str, str]):
     subject = "Login Alert"
-    content: str = f"<p>Hi {user_info['full_name']}, You just logged in to TaskFlow.</p>"
+    content: str = (
+        f"<p>Hi {user_info['full_name']}, You just logged in to TaskFlow.</p>"
+    )
     print("---" * 30)
-    print(subject, content, user_info['email'])
-    async_to_sync(send_email)(user_info['email'], subject, content)
+    print(subject, content, user_info["email"])
+    async_to_sync(send_email)(user_info["email"], subject, content)
     print("---" * 30)
 
 

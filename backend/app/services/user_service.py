@@ -12,9 +12,7 @@ from app.schema.user import UserUpdate
 
 
 class UserService:
-    async def create_user(
-        self, session: AsyncSession, user_create: UserCreate
-    ) -> User:
+    async def create_user(self, session: AsyncSession, user_create: UserCreate) -> User:
         """
         Create a new user.
         """

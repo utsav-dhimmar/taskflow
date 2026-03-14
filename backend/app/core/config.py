@@ -1,4 +1,5 @@
-from pydantic import computed_field
+from pydantic import Field
+from pydantic import computed_field, HttpUrl
 from pydantic_settings import BaseSettings
 
 
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     DEBUG: bool = True
+    FRONTEND_URLS: list[str] = Field(description="allow frontend end points")
     model_config = {
         "env_file": ".env",
         "extra": "ignore",

@@ -77,15 +77,13 @@ async def login(
 
     session.add(user)
     await session.commit()
-    await session.refresh(user) 
+    await session.refresh(user)
     try:
         send_login_email.delay({"full_name": user.full_name, "email": user.email})
     except Exception as e:
         print("mail send failed ")
         print(e)
-    json_user_data = jsonable_encoder(
-        user, exclude={"password", "refresh_token"}
-    )
+    json_user_data = jsonable_encoder(user, exclude={"password", "refresh_token"})
     res = JSONResponse(
         content=json_user_data,
         media_type="application/json",
@@ -165,9 +163,7 @@ async def refresh_token_endpoint(
     await session.refresh(user)
 
     #  add in cookie
-    json_user_data = jsonable_encoder(
-        user, exclude={"password", "refresh_token"}
-    )
+    json_user_data = jsonable_encoder(user, exclude={"password", "refresh_token"})
     res = JSONResponse(
         content=json_user_data,
         media_type="application/json",
