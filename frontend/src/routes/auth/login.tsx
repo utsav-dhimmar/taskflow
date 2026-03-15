@@ -1,10 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
-import type z from "zod";
+import z, { email } from "zod";
 
-import { loginAuthLoginPost, readUsersMeAuthMeGet } from "@/api/auth/auth";
-import { loginAuthLoginPostBody } from "@/api/schema";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -20,21 +18,17 @@ export const Route = createFileRoute("/auth/login")({
   component: RouteComponent,
 });
 
+const loginBody = z.object({
+  email: z.email(),
+  password: z.string().min(8),
+});
+type LoginBody = z.infer<typeof loginBody>;
 function RouteComponent() {
-  const form = useForm<z.infer<typeof loginAuthLoginPostBody>>({
-    resolver: zodResolver(loginAuthLoginPostBody),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+  const form = useForm<LoginBody>({
+    resolver: zodResolver(loginBody),
   });
-  async function onSubmit(values: z.infer<typeof loginAuthLoginPostBody>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    // console.log(values);
-    const res = await loginAuthLoginPost(values);
-    console.table(res);
-    console.log(res.data);
+  async function onSubmit(values: LoginBody) {
+    console.log(values);
   }
   return (
     <Form {...form}>

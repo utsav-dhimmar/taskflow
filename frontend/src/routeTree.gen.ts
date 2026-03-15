@@ -32,7 +32,7 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/me/$name': typeof MeNameRoute
-  '/about': typeof AboutIndexRoute
+  '/about/': typeof AboutIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
@@ -47,7 +47,7 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/auth/login' | '/me/$name' | '/about'
+  fullPaths: '/auth/login' | '/me/$name' | '/about/'
   fileRoutesByTo: FileRoutesByTo
   to: '/auth/login' | '/me/$name' | '/about'
   id: '__root__' | '/auth/login' | '/me/$name' | '/about/'
@@ -64,7 +64,7 @@ declare module '@tanstack/react-router' {
     '/about/': {
       id: '/about/'
       path: '/about'
-      fullPath: '/about'
+      fullPath: '/about/'
       preLoaderRoute: typeof AboutIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
