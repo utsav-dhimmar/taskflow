@@ -12,15 +12,17 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <React.Fragment>
-      <div>Hello "__root"!</div>
-      <Button
-        onClick={(k) => {
-          console.log("Hi", k.type);
-        }}
-      >
-        Click Me
-      </Button>
-      <Outlet />
+      <main className="bg-gray-500">
+        <div>Hello "__root"!</div>
+        <Button
+          onClick={(k) => {
+            console.log("Hi", k.type);
+          }}
+        >
+          Click Me
+        </Button>
+        <Outlet />
+      </main>
       <TanStackRouterDevtools />
     </React.Fragment>
   );

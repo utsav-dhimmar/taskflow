@@ -1,5 +1,4 @@
-from pydantic import Field
-from pydantic import computed_field, HttpUrl
+from pydantic import computed_field,Field
 from pydantic_settings import BaseSettings
 
 

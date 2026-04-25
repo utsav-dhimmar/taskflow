@@ -1,8 +1,15 @@
+# README
+
+- For Dev Mode
 ```bash
-celery -A app.core.celery_app worker --loglevel=info --pool=solo
+fastapi dev app/main.py
+```
+- for production Mode
+```bash
+fastapi run app/main.py
 ```
 
 
 ```bash
-fastapi dev app/main.py
+celery -A app.core.celery_app worker --loglevel=info --pool=solo
 ```

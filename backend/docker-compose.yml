@@ -2,7 +2,7 @@
 
 services:
     db:
-        image: postgres:18 # postgres
+        image: postgres:16 # postgres
         restart: always
         environment:
             POSTGRES_USER: utsav
@@ -13,7 +13,7 @@ services:
         ports:
             - "5432:5432" # Map container port 5432 to host port 5432
         volumes:
-            - postgres_data:/var/lib/postgresql # Persistent storage for data
+            - postgres_data:/var/lib/postgresql/18/docker # Persistent storage for data
     redis:
         image: redis:8.4.0-alpine
         restart: always
