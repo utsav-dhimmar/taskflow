@@ -7,24 +7,16 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.security import get_hashed_password, verify_password
 from app.models.user import User
-from app.schema.auth import UserCreate, UserLogin
-from app.schema.user import UserUpdate
+from app.schemas.auth import UserCreate, UserLogin
+from app.schemas.user import UserUpdate
 
 
 class UserService:
-    async def create_user(self, session: AsyncSession, user_create: UserCreate) -> User:
+    async def create_user(
+        self, session: AsyncSession, user_create: UserCreate
+    ) -> User:
         """
         Create a new user.
-        """
-        # -----
-        """
-        Pydantic(SQLModel) validate the data.
-        check is user with email already exists.
-        if yes say -> Email exists
-        no ?
-        hash the password
-        create user
-        return user
         """
         statement = select(User).where(User.email == user_create.email)
         existing_user = (await session.exec(statement)).first()

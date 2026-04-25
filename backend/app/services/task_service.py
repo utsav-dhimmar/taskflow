@@ -5,12 +5,12 @@ from fastapi import HTTPException, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.celery_app import celery_app
 from app.models.enums import ProjectPriority, ProjectStatus, Role
 from app.models.project import Project, ProjectMember
 from app.models.task import Task
 from app.models.user import User
-from app.schema.task import TaskCreate, TaskUpdate
-from app.worker import send_task_assigned_email
+from app.schemas.task import TaskCreate, TaskUpdate
 
 
 class TaskService:
@@ -23,7 +23,8 @@ class TaskService:
     ) -> Task:
         # Verify user is member of project
         statement = select(ProjectMember).where(
-            ProjectMember.project_id == project_id, ProjectMember.user_id == user.id
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == user.id,
         )
         member = (await session.exec(statement)).first()
         if not member and user.role != Role.ADMIN:
@@ -60,8 +61,9 @@ class TaskService:
             assigned_user = await session.get(User, db_task.assigned_to)
             project = await session.get(Project, project_id)
             if assigned_user and project:
-                send_task_assigned_email.delay(
-                    assigned_user.email, db_task.title, project.name
+                celery_app.send_task(
+                    "app.worker.send_task_assigned_email",
+                    args=[assigned_user.email, db_task.title, project.name],
                 )
 
         return db_task
@@ -78,14 +80,16 @@ class TaskService:
     ) -> Sequence[Task]:
         # Verify membership
         member_check = select(ProjectMember).where(
-            ProjectMember.project_id == project_id, ProjectMember.user_id == user.id
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == user.id,
         )
         if not (await session.exec(member_check)).first():
             # Check if owner
             project = await session.get(Project, project_id)
             if not project or project.owner_id != user.id:
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied",
                 )
 
         statement = select(Task).where(Task.project_id == project_id)
@@ -124,7 +128,8 @@ class TaskService:
 
         # Check member
         stat = select(ProjectMember).where(
-            ProjectMember.project_id == project_id, ProjectMember.user_id == user.id
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == user.id,
         )
         if (await session.exec(stat)).first():
             return task

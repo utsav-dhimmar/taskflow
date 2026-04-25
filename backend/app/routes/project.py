@@ -10,8 +10,8 @@ from app.models.enums import Role
 from app.models.project import Project, ProjectMember
 from app.models.user import User
 from app.routes.auth import get_current_user
-from app.schema.project import ProjectCreate, ProjectResponse, ProjectUpdate
-from app.schema.project_member import (
+from app.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate
+from app.schemas.project_member import (
     ProjectMemberCreate,
     ProjectMemberResponse,
     ProjectMemberUpdate,
@@ -22,7 +22,9 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 project_service = ProjectService()
 
 
-@router.post("/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_project(
     project_create: ProjectCreate,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -37,7 +39,9 @@ async def create_project(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can create projects",
         )
-    return await project_service.create_project(session, project_create, current_user)
+    return await project_service.create_project(
+        session, project_create, current_user
+    )
 
 
 @router.get("/", response_model=List[ProjectResponse])
@@ -57,7 +61,9 @@ async def read_project(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
-    project = await project_service.get_project_by_id(session, project_id, current_user)
+    project = await project_service.get_project_by_id(
+        session, project_id, current_user
+    )
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -90,7 +96,9 @@ async def delete_project(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
-    success = await project_service.delete_project(session, project_id, current_user)
+    success = await project_service.delete_project(
+        session, project_id, current_user
+    )
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -118,7 +126,8 @@ async def check_project_admin_permission(
 
     member = await session.exec(
         select(ProjectMember).where(
-            ProjectMember.project_id == project_id, ProjectMember.user_id == user_id
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == user_id,
         )
     )
     member = member.first()
@@ -157,14 +166,18 @@ async def list_project_members(
     List all members of the project
     """
     # Verify user can access project
-    project = await project_service.get_project_by_id(session, project_id, current_user)
+    project = await project_service.get_project_by_id(
+        session, project_id, current_user
+    )
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
     return await project_service.get_project_members(session, project_id)
 
 
-@router.patch("/{project_id}/members/{user_id}", response_model=ProjectMemberResponse)
+@router.patch(
+    "/{project_id}/members/{user_id}", response_model=ProjectMemberResponse
+)
 async def update_project_member_role(
     project_id: UUID,
     user_id: UUID,
@@ -197,7 +210,9 @@ async def remove_project_member(
     Remove the project member from the project
     """
     await check_project_admin_permission(session, project_id, current_user.id)
-    success = await project_service.remove_project_member(session, project_id, user_id)
+    success = await project_service.remove_project_member(
+        session, project_id, user_id
+    )
     if not success:
         raise HTTPException(status_code=404, detail="Member not found")
     return

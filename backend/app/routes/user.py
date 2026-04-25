@@ -1,5 +1,4 @@
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -8,8 +7,8 @@ from app.db.main import get_session
 from app.models.enums import Role
 from app.models.user import User
 from app.routes.auth import get_current_user
-from app.schema.auth import UserResponse
-from app.schema.user import UserStatusUpdate, UserUpdate
+from app.schemas.auth import UserResponse
+from app.schemas.user import UserStatusUpdate, UserUpdate
 from app.services.user_service import UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -70,4 +69,6 @@ async def update_user_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    return await user_service.update_user_status(session, user, status_update.is_active)
+    return await user_service.update_user_status(
+        session, user, status_update.is_active
+    )

@@ -1,16 +1,15 @@
 from typing import Annotated, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db.main import get_session
 from app.models.enums import ProjectPriority, ProjectStatus
 from app.models.user import User
 from app.routes.auth import get_current_user
-from app.schema.task import TaskCreate, TaskResponse, TaskUpdate
+from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
 from app.services.task_service import TaskService
-
 
 router = APIRouter(tags=["tasks"])
 task_service = TaskService()
@@ -69,7 +68,9 @@ async def update_task(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
-    task = await task_service.update_task(session, task_id, task_update, current_user)
+    task = await task_service.update_task(
+        session, task_id, task_update, current_user
+    )
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     return task

@@ -8,7 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.enums import Role
 from app.models.project import Project, ProjectMember
 from app.models.user import User
-from app.schema.project import ProjectCreate, ProjectUpdate
+from app.schemas.project import ProjectCreate, ProjectUpdate
 
 
 class ProjectService:
@@ -89,7 +89,9 @@ class ProjectService:
     async def get_project_members(
         self, session: AsyncSession, project_id: UUID
     ) -> Sequence[ProjectMember]:
-        statement = select(ProjectMember).where(ProjectMember.project_id == project_id)
+        statement = select(ProjectMember).where(
+            ProjectMember.project_id == project_id
+        )
         result = await session.exec(statement)
         return result.all()
 
@@ -107,7 +109,9 @@ class ProjectService:
                 detail="User is already a member of this project",
             )
 
-        member = ProjectMember(project_id=project_id, user_id=user_id, role=role)
+        member = ProjectMember(
+            project_id=project_id, user_id=user_id, role=role
+        )
         session.add(member)
         await session.commit()
         await session.refresh(member)

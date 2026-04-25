@@ -8,17 +8,17 @@ from fastapi.responses import JSONResponse
 from jwt.exceptions import InvalidTokenError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.celery_app import celery_app
 from app.core.config import setting
 from app.core.security import create_access_token, create_refresh_token
 from app.db.main import get_session
 from app.models.user import User
-from app.schema.auth import (
+from app.schemas.auth import (
     UserCreate,
     UserLogin,
     UserResponse,
 )
 from app.services.user_service import UserService
-from app.worker import send_login_email, send_welcome_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 user_service = UserService()
@@ -46,7 +46,9 @@ async def register(
     Register a new user controller
     """
     user = await user_service.create_user(session, user_create)
-    send_welcome_email.delay(user.email, user.full_name)
+    celery_app.send_task(
+        "app.worker.send_welcome_email", args=[user.email, user.full_name]
+    )
     return user
 
 
@@ -71,7 +73,8 @@ async def login(
 
     # Store refresh token and expiration in DB
     user.refresh_token = refresh_token
-    user.expires_at = datetime.utcnow() + timedelta(
+
+    user.expires_at = datetime.now(None) + timedelta(
         days=setting.REFRESH_TOKEN_EXPIRE_DAYS
     )
 
@@ -79,11 +82,16 @@ async def login(
     await session.commit()
     await session.refresh(user)
     try:
-        send_login_email.delay({"full_name": user.full_name, "email": user.email})
+        celery_app.send_task(
+            "app.worker.send_login_email",
+            args=[{"full_name": user.full_name, "email": user.email}],
+        )
     except Exception as e:
         print("mail send failed ")
         print(e)
-    json_user_data = jsonable_encoder(user, exclude={"password", "refresh_token"})
+    json_user_data = jsonable_encoder(
+        user, exclude={"password", "refresh_token"}
+    )
     res = JSONResponse(
         content=json_user_data,
         media_type="application/json",
@@ -134,8 +142,8 @@ async def refresh_token_endpoint(
         payload = jwt.decode(
             refresh_token, setting.SECRET_KEY, algorithms=[setting.ALGORITHM]
         )
-        user_id: str = payload.get("sub")
-        is_refresh: bool = payload.get("refresh")
+        user_id: str | None = payload.get("sub")
+        is_refresh: bool | None = payload.get("refresh")
         if user_id is None or not is_refresh:
             raise credentials_exception
     except InvalidTokenError:
@@ -146,7 +154,7 @@ async def refresh_token_endpoint(
         raise credentials_exception
 
     # Check DB expiration
-    if user.expires_at and user.expires_at < datetime.utcnow():
+    if user.expires_at and user.expires_at < datetime.now(None):
         raise credentials_exception
 
     # new tokens
@@ -154,7 +162,7 @@ async def refresh_token_endpoint(
     new_refresh_token = create_refresh_token(subject=user.id)
 
     user.refresh_token = new_refresh_token
-    user.expires_at = datetime.utcnow() + timedelta(
+    user.expires_at = datetime.now(None) + timedelta(
         days=setting.REFRESH_TOKEN_EXPIRE_DAYS
     )
 
@@ -163,7 +171,9 @@ async def refresh_token_endpoint(
     await session.refresh(user)
 
     #  add in cookie
-    json_user_data = jsonable_encoder(user, exclude={"password", "refresh_token"})
+    json_user_data = jsonable_encoder(
+        user, exclude={"password", "refresh_token"}
+    )
     res = JSONResponse(
         content=json_user_data,
         media_type="application/json",
