@@ -58,6 +58,7 @@ app.add_middleware(
     AuthMiddleware,
     # no auth require for these paths
     exclude_paths=[
+        "/",
         "/auth/login",
         "/auth/register",
         "/auth/refresh",
@@ -67,6 +68,11 @@ app.add_middleware(
         str(app.redoc_url),
     ],
 )
+
+
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
 
 
 app.add_middleware(
