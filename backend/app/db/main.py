@@ -36,3 +36,4 @@ async def init_db():
     async with engine.begin() as conn:
         # await conn.execute(text("PRAGMA journal_mode=WAL;"))
         await conn.run_sync(SQLModel.metadata.create_all)
+        print("Tables created successfully")
