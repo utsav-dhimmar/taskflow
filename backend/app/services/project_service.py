@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -68,7 +68,7 @@ class ProjectService:
 
     async def get_project_by_id(
         self, session: AsyncSession, project_id: UUID, user: User
-    ) -> Optional[Project]:
+    ) -> Project | None:
         project = await session.get(Project, project_id)
         if not project:
             return None
@@ -119,7 +119,7 @@ class ProjectService:
 
     async def update_project_member(
         self, session: AsyncSession, project_id: UUID, user_id: UUID, role: Role
-    ) -> Optional[ProjectMember]:
+    ) -> ProjectMember | None:
         statement = select(ProjectMember).where(
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user_id,
@@ -155,7 +155,7 @@ class ProjectService:
         project_id: UUID,
         project_update: ProjectUpdate,
         user: User,
-    ) -> Optional[Project]:
+    ) -> Project | None:
         project = await session.get(Project, project_id)
         if not project:
             return None

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -184,7 +184,7 @@ def test_login_celery_task_failure_does_not_break_login(
 def test_refresh_token_success(client, test_user):
     # Set valid refresh token for user in DB
     refresh_token = create_refresh_token(subject=test_user.id)
-    expires_at = datetime.now(None) + timedelta(days=7)
+    expires_at = datetime.now(tz=UTC) + timedelta(days=7)
 
     async def _setup_token():
         async with TestAsyncSessionLocal() as session:
@@ -246,7 +246,7 @@ def test_refresh_token_mismatched_db_token(client, test_user):
         async with TestAsyncSessionLocal() as session:
             user = await session.get(User, test_user.id)
             user.refresh_token = "different_token_in_db"
-            user.expires_at = datetime.now(None) + timedelta(days=7)
+            user.expires_at = datetime.now(tz=UTC) + timedelta(days=7)
             session.add(user)
             await session.commit()
 
@@ -269,7 +269,7 @@ def test_refresh_token_user_not_found(client):
 
 def test_refresh_token_expired_in_db(client, test_user):
     refresh_token = create_refresh_token(subject=test_user.id)
-    expired_time = datetime.now(None) - timedelta(days=1)
+    expired_time = datetime.now(tz=UTC) - timedelta(days=1)
 
     async def _setup_expired():
         async with TestAsyncSessionLocal() as session:
@@ -372,7 +372,7 @@ def test_get_me_user_not_found(client):
 
 def test_get_me_session_expired(client, test_user):
     token = create_access_token(subject=test_user.id)
-    expired_time = datetime.utcnow() - timedelta(minutes=10)
+    expired_time = datetime.now(UTC) - timedelta(minutes=10)
 
     async def _setup_expired():
         async with TestAsyncSessionLocal() as session:

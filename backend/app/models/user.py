@@ -1,8 +1,7 @@
-from datetime import datetime
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from sqlmodel import Field, SQLModel
+from sqlmodel import Column, DateTime, Field, SQLModel
 
 from app.models.enums import Role
 
@@ -19,7 +18,15 @@ class User(SQLModel, table=True):
     full_name: str
     role: Role = Field(default=Role.USER)
     is_active: bool = Field(default=True)
-    refresh_token: Optional[str] = Field(default=None)
-    expires_at: Optional[datetime] = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    refresh_token: str | None = Field(default=None)
+    expires_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True))
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True)),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True)),
+    )

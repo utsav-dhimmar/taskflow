@@ -1,4 +1,4 @@
-from typing import Annotated, List, Optional
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -34,13 +34,13 @@ async def create_task(
     )
 
 
-@router.get("/projects/{project_id}/tasks", response_model=List[TaskResponse])
+@router.get("/projects/{project_id}/tasks", response_model=list[TaskResponse])
 async def list_tasks(
     project_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
-    status: Optional[ProjectStatus] = None,
-    priority: Optional[ProjectPriority] = None,
+    status: ProjectStatus | None = None,
+    priority: ProjectPriority | None = None,
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
 ):
@@ -85,4 +85,3 @@ async def delete_task(
     success = await task_service.delete_task(session, task_id, current_user)
     if not success:
         raise HTTPException(status_code=404, detail="Task not found")
-    return

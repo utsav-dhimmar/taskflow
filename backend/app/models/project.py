@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlmodel import Field, SQLModel
+
 from app.models.enums import Role
 
 
@@ -11,8 +12,12 @@ class Project(SQLModel, table=True):
     name: str
     description: str | None = Field(default=None)
     owner_id: UUID = Field(foreign_key="users.id", ondelete="CASCADE")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+    )
 
 
 class ProjectMember(SQLModel, table=True):
@@ -21,5 +26,9 @@ class ProjectMember(SQLModel, table=True):
     user_id: UUID = Field(foreign_key="users.id", ondelete="CASCADE")
     project_id: UUID = Field(foreign_key="projects.id", ondelete="CASCADE")
     role: Role = Field(default=Role.USER)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+    )

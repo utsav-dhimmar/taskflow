@@ -29,7 +29,7 @@ app = FastAPI(
     openapi_url="/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
-    debug=True if setting.DEBUG else False,
+    debug=bool(setting.DEBUG),
 )
 
 
@@ -43,7 +43,11 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """"""
+    """
+
+    This is a global exception handler for all exceptions that are not caught by other handlers.
+
+    """
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

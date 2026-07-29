@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -44,7 +44,7 @@ async def create_project(
     )
 
 
-@router.get("/", response_model=List[ProjectResponse])
+@router.get("/", response_model=list[ProjectResponse])
 async def list_projects(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
@@ -104,7 +104,6 @@ async def delete_project(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found",
         )
-    return
 
 
 async def check_project_admin_permission(
@@ -156,7 +155,7 @@ async def add_project_member_endpoint(
     )
 
 
-@router.get("/{project_id}/members", response_model=List[ProjectMemberResponse])
+@router.get("/{project_id}/members", response_model=list[ProjectMemberResponse])
 async def list_project_members(
     project_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -215,4 +214,3 @@ async def remove_project_member(
     )
     if not success:
         raise HTTPException(status_code=404, detail="Member not found")
-    return

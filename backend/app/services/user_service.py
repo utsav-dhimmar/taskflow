@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -40,7 +39,7 @@ class UserService:
 
     async def login(
         self, session: AsyncSession, user_login: UserLogin
-    ) -> Optional[User]:
+    ) -> User | None:
         """
         Login a user.
         """
@@ -61,7 +60,7 @@ class UserService:
 
     async def get_user_by_id(
         self, session: AsyncSession, user_id: str
-    ) -> Optional[User]:
+    ) -> User | None:
         """
         Get a user by id.
         """
@@ -92,3 +91,6 @@ class UserService:
         await session.commit()
         await session.refresh(user)
         return user
+
+
+user_service = UserService()

@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import List, Optional
+from datetime import UTC, datetime
 from uuid import UUID
 
 import jwt
@@ -17,7 +16,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        exclude_paths: Optional[List[str]] = None,
+        exclude_paths: list[str] | None = None,
     ):
         super().__init__(app)
         self.exclude_paths = exclude_paths or []
@@ -36,8 +35,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Regex or prefix exclusions (e.g. /docs, /openapi.json)
         # We can add them to exclude_paths too, but let's handle docs explicitly if not passed
         if (
-            path.startswith("/docs")
-            or path.startswith("/redoc")
+            path.startswith(("/docs", "/redoc"))
             or path == "/openapi.json"
             or path == ""
         ):
@@ -61,7 +59,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 token, setting.SECRET_KEY, algorithms=[setting.ALGORITHM]
             )
             print(f"{payload=}")
-            user_id: str = payload.get("sub")
+            user_id: str | None = payload.get("sub")
             print(f"{user_id=}")
             if user_id is None:
                 raise InvalidTokenError()
@@ -82,11 +80,17 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 )
 
             # Check Expiration/Validity from DB side
-            if user.expires_at and user.expires_at < datetime.utcnow():
-                return JSONResponse(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    content={"detail": "Session expired"},
+            if user.expires_at:
+                expires_at = (
+                    user.expires_at.replace(tzinfo=UTC)
+                    if user.expires_at.tzinfo is None
+                    else user.expires_at
                 )
+                if expires_at < datetime.now(tz=UTC):
+                    return JSONResponse(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        content={"detail": "Session expired"},
+                    )
 
             # Attach user to request state
             request.state.user = user

@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -73,8 +73,8 @@ class TaskService:
         session: AsyncSession,
         project_id: UUID,
         user: User,
-        status_filter: Optional[ProjectStatus] = None,
-        priority_filter: Optional[ProjectPriority] = None,
+        status_filter: ProjectStatus | None = None,
+        priority_filter: ProjectPriority | None = None,
         page: int = 1,
         limit: int = 10,
     ) -> Sequence[Task]:
@@ -106,7 +106,7 @@ class TaskService:
 
     async def get_task_by_id(
         self, session: AsyncSession, task_id: UUID, user: User
-    ) -> Optional[Task]:
+    ) -> Task | None:
         task = await session.get(Task, task_id)
         if not task:
             return None

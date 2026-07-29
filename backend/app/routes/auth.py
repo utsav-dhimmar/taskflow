@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import jwt
+from celery.exceptions import OperationalError
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -18,10 +19,9 @@ from app.schemas.auth import (
     UserLogin,
     UserResponse,
 )
-from app.services.user_service import UserService
+from app.services.user_service import user_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-user_service = UserService()
 
 
 async def get_current_user(
@@ -74,7 +74,7 @@ async def login(
     # Store refresh token and expiration in DB
     user.refresh_token = refresh_token
 
-    user.expires_at = datetime.now(None) + timedelta(
+    user.expires_at = datetime.now(tz=UTC) + timedelta(
         days=setting.REFRESH_TOKEN_EXPIRE_DAYS
     )
 
@@ -154,15 +154,21 @@ async def refresh_token_endpoint(
         raise credentials_exception
 
     # Check DB expiration
-    if user.expires_at and user.expires_at < datetime.now(None):
-        raise credentials_exception
+    if user.expires_at:
+        expires_at = (
+            user.expires_at.replace(tzinfo=UTC)
+            if user.expires_at.tzinfo is None
+            else user.expires_at
+        )
+        if expires_at < datetime.now(tz=UTC):
+            raise credentials_exception
 
     # new tokens
     new_access_token = create_access_token(subject=user.id)
     new_refresh_token = create_refresh_token(subject=user.id)
 
     user.refresh_token = new_refresh_token
-    user.expires_at = datetime.now(None) + timedelta(
+    user.expires_at = datetime.now(tz=UTC) + timedelta(
         days=setting.REFRESH_TOKEN_EXPIRE_DAYS
     )
 
