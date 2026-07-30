@@ -6,14 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from jwt.exceptions import InvalidTokenError
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.security import create_access_token, create_refresh_token
 from app.db.main import get_session
-from app.models.user import User
+from app.db.models.user import User
 from app.schemas.auth import (
     UserCreate,
     UserLogin,

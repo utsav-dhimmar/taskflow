@@ -110,10 +110,11 @@ MAIL_FROM=noreply@taskflow.local
 
 ### 4. Run database migrations
 
-<!--TODO: use Alembic migration-->
+lembic migration
 
 ```bash
-# Tables are auto-created on startup via SQLModel
+
+uv run alembic upgrade head
 ```
 
 ### 5. Start development servers
@@ -237,11 +238,9 @@ docker run -d \
   taskflow-backend
 ```
 
-<!------->
+---
 
-<!--## Database Migrations (Production)
-
-When ready for production, set up Alembic:
+## Database Migrations (Production)
 
 ```bash
 # Initialize alembic
@@ -254,7 +253,7 @@ uv run alembic revision --autogenerate -m "initial"
 
 # Apply migrations
 uv run alembic upgrade head
-```-->
+```
 
 ---
 

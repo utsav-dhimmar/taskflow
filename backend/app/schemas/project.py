@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -7,18 +6,18 @@ from pydantic import BaseModel
 
 class ProjectCreate(BaseModel):
     name: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class ProjectUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
 
 
 class ProjectResponse(BaseModel):
     id: UUID
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     owner_id: UUID
     created_at: datetime
     updated_at: datetime

@@ -1,11 +1,8 @@
 from collections.abc import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlmodel import SQLModel
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
-from app.core.logging import logger
 
 database_url = settings.DATABASE_URL
 
@@ -21,8 +18,3 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
 
-
-async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-        logger.info("Database tables created successfully")

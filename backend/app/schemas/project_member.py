@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.models.enums import Role
+from app.db.models.enums import Role
 
 
 class ProjectMemberCreate(BaseModel):

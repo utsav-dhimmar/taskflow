@@ -1,12 +1,12 @@
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import logger
 from app.core.security import get_hashed_password, verify_password
-from app.models.user import User
+from app.db.models.user import User
 from app.schemas.auth import UserCreate, UserLogin
 from app.schemas.user import UserUpdate
 
@@ -19,7 +19,7 @@ class UserService:
         Create a new user.
         """
         statement = select(User).where(User.email == user_create.email)
-        existing_user = (await session.exec(statement)).first()
+        existing_user = (await session.execute(statement)).scalars().first()
 
         if existing_user:
             raise HTTPException(
@@ -52,7 +52,7 @@ class UserService:
         if email exists and password is correct then return the user
         """
         statement = select(User).where(User.email == user_login.email)
-        user = (await session.exec(statement)).first()
+        user = (await session.execute(statement)).scalars().first()
         if not user:
             return None
         if not verify_password(user_login.password, user.password):

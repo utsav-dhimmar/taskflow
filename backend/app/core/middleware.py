@@ -10,7 +10,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.main import async_session
-from app.models.user import User
+from app.db.models.user import User
 
 logger = get_logger(__name__)
 
