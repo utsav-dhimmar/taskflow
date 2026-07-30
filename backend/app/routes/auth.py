@@ -2,7 +2,6 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import jwt
-from celery.exceptions import OperationalError
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -10,7 +9,8 @@ from jwt.exceptions import InvalidTokenError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.celery_app import celery_app
-from app.core.config import setting
+from app.core.config import settings
+from app.core.logging import logger
 from app.core.security import create_access_token, create_refresh_token
 from app.db.main import get_session
 from app.models.user import User
@@ -75,7 +75,7 @@ async def login(
     user.refresh_token = refresh_token
 
     user.expires_at = datetime.now(tz=UTC) + timedelta(
-        days=setting.REFRESH_TOKEN_EXPIRE_DAYS
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
     )
 
     session.add(user)
@@ -102,7 +102,7 @@ async def login(
         httponly=True,
         secure=False,  # temp
         samesite="lax",
-        max_age=setting.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
     res.set_cookie(
         "refresh_token",
@@ -110,9 +110,9 @@ async def login(
         httponly=True,
         secure=False,
         samesite="lax",  # temp
-        max_age=setting.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
-
+    logger.info(f"User login successfully: {user.email}")
     return res
 
 
@@ -140,7 +140,7 @@ async def refresh_token_endpoint(
 
     try:
         payload = jwt.decode(
-            refresh_token, setting.SECRET_KEY, algorithms=[setting.ALGORITHM]
+            refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         user_id: str | None = payload.get("sub")
         is_refresh: bool | None = payload.get("refresh")
@@ -169,7 +169,7 @@ async def refresh_token_endpoint(
 
     user.refresh_token = new_refresh_token
     user.expires_at = datetime.now(tz=UTC) + timedelta(
-        days=setting.REFRESH_TOKEN_EXPIRE_DAYS
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
     )
 
     session.add(user)
@@ -190,7 +190,7 @@ async def refresh_token_endpoint(
         httponly=True,
         secure=False,
         samesite="lax",
-        max_age=setting.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
     res.set_cookie(
         "refresh_token",
@@ -198,9 +198,9 @@ async def refresh_token_endpoint(
         httponly=True,
         secure=False,
         samesite="lax",
-        max_age=setting.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
-
+    logger.info(f"User access token refreshed successfully: {user.email}")
     return res
 
 
@@ -219,6 +219,7 @@ async def logout(
     res = JSONResponse(content={"message": "Successfully logged out"})
     res.delete_cookie("access_token")
     res.delete_cookie("refresh_token")
+    logger.info(f"User log out successfully: {current_user.email}")
     return res
 
 

@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.logging import logger
 from app.core.security import get_hashed_password, verify_password
 from app.models.user import User
 from app.schemas.auth import UserCreate, UserLogin
@@ -35,6 +36,7 @@ class UserService:
         session.add(db_user)
         await session.commit()
         await session.refresh(db_user)
+        logger.info(f"User created: {db_user.email}")
         return db_user
 
     async def login(

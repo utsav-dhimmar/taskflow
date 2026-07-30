@@ -4,24 +4,14 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.config import setting
+from app.core.config import settings
+from app.core.logging import logger
 
-# sync driver -> make it async driver
-# If DB is sqlite then url start with  sqlite://... -> sqlite+aiosqlite:///...
-# If DB is postgresql then url start with  postgresql://... -> postgresql+asyncpg://...
-# postgresql://user:password@hostname:port/database_name
-
-database_url = setting.DATABASE_URL
-if database_url and database_url.startswith("postgresql://"):
-    if "postgresql+asyncpg" not in database_url:
-        database_url = database_url.replace(
-            "postgresql://", "postgresql+asyncpg://"
-        )
+database_url = settings.DATABASE_URL
 
 
 connect_args = {"check_same_thread": False}
-engine = create_async_engine(database_url, echo=setting.DEBUG)
-# engine = create_async_engine(database_url, echo=True, connect_args=connect_args)
+engine = create_async_engine(database_url, echo=settings.DEBUG)
 async_session = async_sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
@@ -34,6 +24,5 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db():
     async with engine.begin() as conn:
-        # await conn.execute(text("PRAGMA journal_mode=WAL;"))
         await conn.run_sync(SQLModel.metadata.create_all)
-        print("Tables created successfully")
+        logger.info("Database tables created successfully")

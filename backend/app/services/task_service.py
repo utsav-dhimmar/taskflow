@@ -6,11 +6,14 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.celery_app import celery_app
+from app.core.logging import get_logger
 from app.models.enums import ProjectPriority, ProjectStatus, Role
 from app.models.project import Project, ProjectMember
 from app.models.task import Task
 from app.models.user import User
 from app.schemas.task import TaskCreate, TaskUpdate
+
+logger = get_logger(__name__)
 
 
 class TaskService:
@@ -178,5 +181,5 @@ class TaskService:
 
         await session.delete(task)
         await session.commit()
-        print(task)
+        logger.info(f"Task deleted: {task.id}")
         return True

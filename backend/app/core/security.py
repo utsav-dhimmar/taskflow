@@ -4,7 +4,7 @@ from typing import Any
 import jwt
 from passlib.context import CryptContext
 
-from app.core.config import setting
+from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -34,11 +34,11 @@ def create_access_token(
         expire = datetime.now(tz=UTC) + expires_delta
     else:
         expire = datetime.now(tz=UTC) + timedelta(
-            minutes=setting.ACCESS_TOKEN_EXPIRE_MINUTES
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     to_encode = {"exp": expire, "sub": str(subject)}
     return jwt.encode(
-        to_encode, setting.SECRET_KEY, algorithm=setting.ALGORITHM
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
 
 
@@ -49,11 +49,11 @@ def create_refresh_token(subject: str | Any) -> str:
     """
 
     expire = datetime.now(tz=UTC) + timedelta(
-        days=setting.REFRESH_TOKEN_EXPIRE_DAYS
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
     )
     to_encode = {"exp": expire, "sub": str(subject), "refresh": True}
     return jwt.encode(
-        to_encode, setting.SECRET_KEY, algorithm=setting.ALGORITHM
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
 
 

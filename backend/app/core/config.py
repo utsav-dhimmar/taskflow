@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 
@@ -34,12 +36,16 @@ class Settings(BaseSettings):
     @property
     def DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        # docker-compose -> db
 
     @computed_field(return_type=str)
     @property
-    def REDIS_URL(self):
+    def REDIS_URL(self) -> str:
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
 
-setting = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()

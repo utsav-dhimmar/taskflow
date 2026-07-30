@@ -7,9 +7,12 @@ from fastapi.responses import JSONResponse
 from jwt.exceptions import InvalidTokenError
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.core.config import setting
+from app.core.config import settings
+from app.core.logging import get_logger
 from app.db.main import async_session
 from app.models.user import User
+
+logger = get_logger(__name__)
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -53,14 +56,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 content={"detail": "Not authenticated"},
             )
-        print(f"{token=}")
+        logger.debug(f"Token received: {token[:20]}...")
         try:
             payload = jwt.decode(
-                token, setting.SECRET_KEY, algorithms=[setting.ALGORITHM]
+                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
-            print(f"{payload=}")
+            logger.debug(f"Payload decoded: {payload}")
             user_id: str | None = payload.get("sub")
-            print(f"{user_id=}")
+            logger.debug(f"User ID from token: {user_id}")
             if user_id is None:
                 raise InvalidTokenError()
         except InvalidTokenError:

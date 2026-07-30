@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi_mail import (
     ConnectionConfig,
     FastMail,
@@ -9,19 +7,19 @@ from fastapi_mail import (
 )
 from pydantic import BaseModel
 
-from app.core.config import setting
+from app.core.config import settings
 
 
 class EmailSchema(BaseModel):
-    email: List[NameEmail]
+    email: list[NameEmail]
 
 
 conf = ConnectionConfig(
-    MAIL_USERNAME=setting.MAIL_USERNAME,
-    MAIL_PASSWORD=setting.MAIL_PASSWORD,
-    MAIL_FROM=setting.MAIL_FROM,
-    MAIL_PORT=setting.MAIL_PORT,
-    MAIL_SERVER=setting.MAIL_SERVER,
+    MAIL_USERNAME=settings.MAIL_USERNAME,
+    MAIL_PASSWORD=settings.MAIL_PASSWORD,
+    MAIL_FROM=settings.MAIL_FROM,
+    MAIL_PORT=settings.MAIL_PORT,
+    MAIL_SERVER=settings.MAIL_SERVER,
     MAIL_STARTTLS=False,
     MAIL_SSL_TLS=False,
     USE_CREDENTIALS=False,

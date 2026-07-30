@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.core.config import setting
+from app.core.config import settings
 from app.core.middleware import AuthMiddleware
 from app.db.main import engine, init_db
 from app.routes.auth import router as auth_router
@@ -29,7 +29,7 @@ app = FastAPI(
     openapi_url="/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
-    debug=bool(setting.DEBUG),
+    debug=bool(settings.DEBUG),
 )
 
 
@@ -81,7 +81,7 @@ async def root():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=setting.FRONTEND_URLS,
+    allow_origins=settings.FRONTEND_URLS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -113,4 +113,5 @@ async def scalar_html():
     return get_scalar_api_reference(
         title=app.title,
         dark_mode=True,
+        openapi_url=str(app.openapi_url),
     )

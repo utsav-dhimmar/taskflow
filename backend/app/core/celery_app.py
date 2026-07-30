@@ -1,11 +1,11 @@
 from celery import Celery
 
-from app.core.config import setting
+from app.core.config import settings
 
 celery_app = Celery(
     "worker",
-    broker=f"{setting.REDIS_URL}/0",
-    backend=f"{setting.REDIS_URL}/0",
+    broker=f"{settings.REDIS_URL}/0",
+    backend=f"{settings.REDIS_URL}/0",
     include=["app.worker"],
 )
 
