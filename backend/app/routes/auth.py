@@ -19,6 +19,7 @@ from app.schemas.auth import (
     UserLogin,
     UserResponse,
 )
+from app.schemas.error import ApiErrorResponse
 from app.services.user_service import user_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -37,7 +38,16 @@ async def get_current_user(
     return request.state.user
 
 
-@router.post("/register", response_model=UserResponse)
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ApiErrorResponse,
+            "description": "User with email already exists",
+        }
+    },
+)
 async def register(
     user_create: UserCreate,
     session: Annotated[AsyncSession, Depends(get_session)],
@@ -52,7 +62,16 @@ async def register(
     return user
 
 
-@router.post("/login", response_model=UserResponse)
+@router.post(
+    "/login",
+    response_model=UserResponse,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ApiErrorResponse,
+            "description": "Unauthorized",
+        }
+    },
+)
 async def login(
     user_login: UserLogin,
     session: Annotated[AsyncSession, Depends(get_session)],
@@ -116,7 +135,16 @@ async def login(
     return res
 
 
-@router.post("/refresh", response_model=UserResponse)
+@router.post(
+    "/refresh",
+    response_model=UserResponse,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ApiErrorResponse,
+            "description": "Unauthorized",
+        }
+    },
+)
 async def refresh_token_endpoint(
     request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],

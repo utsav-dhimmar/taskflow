@@ -1,18 +1,46 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import settings
+from app.core.logging import get_logger
 from app.core.middleware import AuthMiddleware
+from app.db.main import engine
 from app.routes.auth import router as auth_router
 from app.routes.project import router as project_router
 from app.routes.task import router as task_router
 from app.routes.user import router as user_router
 from app.schemas.error import ErrorResponse
 
+logger = get_logger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Checking database connection...")
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text("SELECT 1"))
+        logger.info("Database connected successfully!")
+    except SQLAlchemyError as e:
+        logger.error(f"Database connection failed: {e}")
+
+    yield
+
+    logger.info("Shutting down database engine...")
+    try:
+        await engine.dispose()
+    except SQLAlchemyError as e:
+        logger.error(f"Failed to cleanly dispose database engine: {e}")
+
+
 app = FastAPI(
     title="TaskFlow API",
-    # lifespan=lifespan,
+    lifespan=lifespan,
     openapi_url="/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -24,7 +52,7 @@ app = FastAPI(
 async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
-        content={"detail": exc.detail, "path": request.url.path},
+        content={"detail": exc.detail},
     )
 
 

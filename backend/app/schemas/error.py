@@ -5,7 +5,10 @@ class NotFoundError(Exception):
     pass
 
 
-# Request model for error responses
 class ErrorResponse(BaseModel):
     error: str
     message: str
+
+
+class ApiErrorResponse(BaseModel):
+    detail: str

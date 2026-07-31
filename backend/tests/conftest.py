@@ -5,11 +5,15 @@ from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
-import app.db.models.project  # noqa: F401
-import app.db.models.task  # noqa: F401
-import app.db.models.user  # noqa: F401
+import app.db.models.project
+import app.db.models.task
+import app.db.models.user
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -19,7 +23,6 @@ from app.db.base import Base
 from app.db.main import get_session
 from app.db.models.user import User
 from app.main import app
-
 
 TEST_DB_FILE = "./test_taskflow.db"
 TEST_DATABASE_URL = f"sqlite+aiosqlite:///{TEST_DB_FILE}"

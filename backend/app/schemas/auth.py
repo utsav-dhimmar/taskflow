@@ -1,19 +1,22 @@
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from app.db.models.enums import Role
+
+Password = Annotated[str, Field(min_length=6, max_length=32)]
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: Password
     full_name: str
 
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    password: Password
 
 
 class Token(BaseModel):
