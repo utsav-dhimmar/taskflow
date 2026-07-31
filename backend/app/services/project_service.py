@@ -2,12 +2,12 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlmodel import or_, select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.enums import Role
-from app.models.project import Project, ProjectMember
-from app.models.user import User
+from app.db.models.enums import Role
+from app.db.models.project import Project, ProjectMember
+from app.db.models.user import User
 from app.schemas.project import ProjectCreate, ProjectUpdate
 
 
@@ -40,18 +40,17 @@ class ProjectService:
     async def get_projects_for_user(
         self, session: AsyncSession, user: User
     ) -> Sequence[Project]:
-        # Get the all Project where user is member or owner
+        # Get all Projects where user is member or owner
         statement = (
             select(Project)
             .join(
                 ProjectMember,
-                Project.id == ProjectMember.project_id,  # type: ignore
-                # working but typing error
+                Project.id == ProjectMember.project_id,
                 isouter=True,
             )
             .join(
                 User,
-                ProjectMember.user_id == User.id,  # type: ignore
+                ProjectMember.user_id == User.id,
                 isouter=True,
             )
             .where(
@@ -63,8 +62,8 @@ class ProjectService:
             .distinct()
         )
 
-        result = await session.exec(statement)
-        return result.all()
+        result = await session.execute(statement)
+        return result.scalars().all()
 
     async def get_project_by_id(
         self, session: AsyncSession, project_id: UUID, user: User
@@ -80,7 +79,7 @@ class ProjectService:
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user.id,
         )
-        member = (await session.exec(statement)).first()
+        member = (await session.execute(statement)).scalars().first()
         if member:
             return project
 
@@ -92,8 +91,8 @@ class ProjectService:
         statement = select(ProjectMember).where(
             ProjectMember.project_id == project_id
         )
-        result = await session.exec(statement)
-        return result.all()
+        result = await session.execute(statement)
+        return result.scalars().all()
 
     async def add_project_member(
         self, session: AsyncSession, project_id: UUID, user_id: UUID, role: Role
@@ -102,7 +101,7 @@ class ProjectService:
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user_id,
         )
-        existing = (await session.exec(statement)).first()
+        existing = (await session.execute(statement)).scalars().first()
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -124,7 +123,7 @@ class ProjectService:
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user_id,
         )
-        member = (await session.exec(statement)).first()
+        member = (await session.execute(statement)).scalars().first()
         if not member:
             return None
 
@@ -141,7 +140,7 @@ class ProjectService:
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user_id,
         )
-        member = (await session.exec(statement)).first()
+        member = (await session.execute(statement)).scalars().first()
         if not member:
             return False
 
@@ -191,3 +190,4 @@ class ProjectService:
         await session.delete(project)
         await session.commit()
         return True
+

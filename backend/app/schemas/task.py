@@ -1,39 +1,38 @@
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.models.enums import ProjectPriority, ProjectStatus
+from app.db.models.enums import ProjectPriority, ProjectStatus
 
 
 class TaskCreate(BaseModel):
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     status: ProjectStatus = ProjectStatus.TODO
     priority: ProjectPriority = ProjectPriority.MEDIUM
-    assigned_to: Optional[UUID] = None
-    due_datetime: Optional[datetime] = None
+    assigned_to: UUID | None = None
+    due_datetime: datetime | None = None
 
 
 class TaskUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    status: Optional[ProjectStatus] = None
-    priority: Optional[ProjectPriority] = None
-    assigned_to: Optional[UUID] = None
-    due_datetime: Optional[datetime] = None
+    title: str | None = None
+    description: str | None = None
+    status: ProjectStatus | None = None
+    priority: ProjectPriority | None = None
+    assigned_to: UUID | None = None
+    due_datetime: datetime | None = None
 
 
 class TaskResponse(BaseModel):
     id: UUID
     project_id: UUID
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     status: ProjectStatus
     priority: ProjectPriority
-    assigned_to: Optional[UUID] = None
+    assigned_to: UUID | None = None
     created_by: UUID
-    due_datetime: Optional[datetime] = None
+    due_datetime: datetime | None = None
     created_at: datetime
     updated_at: datetime

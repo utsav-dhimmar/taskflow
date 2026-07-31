@@ -4,10 +4,10 @@ from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException, Request, status
-from sqlmodel import select
+from sqlalchemy import select
 
 from app.core.security import create_access_token, create_refresh_token
-from app.models.user import User
+from app.db.models.user import User
 from app.routes.auth import get_current_user
 from tests.conftest import TestAsyncSessionLocal, run_async
 
@@ -65,10 +65,10 @@ def test_register_success(client, mock_celery):
     # Verify user saved in DB
     async def _check_db():
         async with TestAsyncSessionLocal() as session:
-            res = await session.exec(
+            res = await session.execute(
                 select(User).where(User.email == payload["email"])
             )
-            user = res.first()
+            user = res.scalars().first()
             assert user is not None
             assert user.full_name == payload["full_name"]
 

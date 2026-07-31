@@ -2,13 +2,13 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.main import get_session
-from app.models.enums import Role
-from app.models.project import Project, ProjectMember
-from app.models.user import User
+from app.db.models.enums import Role
+from app.db.models.project import Project, ProjectMember
+from app.db.models.user import User
 from app.routes.auth import get_current_user
 from app.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.schemas.project_member import (
@@ -123,13 +123,13 @@ async def check_project_admin_permission(
     if project.owner_id == user_id:
         return True
 
-    member = await session.exec(
+    result = await session.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user_id,
         )
     )
-    member = member.first()
+    member = result.scalars().first()
     if member and member.role == Role.ADMIN:
         return True
 

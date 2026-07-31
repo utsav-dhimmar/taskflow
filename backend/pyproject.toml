@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "aiosqlite>=0.22.1",
+    "alembic>=1.18.5",
     "argon2-cffi>=25.1.0",
     "asgi-lifespan>=2.1.0",
     "asgiref>=3.11.0",
@@ -25,7 +26,6 @@ dependencies = [
     "redis>=7.1.0",
     "scalar-fastapi>=1.5.0",
     "sqlalchemy>=2.0.45",
-    "sqlmodel>=0.0.31",
     "uvicorn>=0.40.0",
 ]
 

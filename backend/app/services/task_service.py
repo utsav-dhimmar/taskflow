@@ -2,15 +2,15 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.celery_app import celery_app
 from app.core.logging import get_logger
-from app.models.enums import ProjectPriority, ProjectStatus, Role
-from app.models.project import Project, ProjectMember
-from app.models.task import Task
-from app.models.user import User
+from app.db.models.enums import ProjectPriority, ProjectStatus, Role
+from app.db.models.project import Project, ProjectMember
+from app.db.models.task import Task
+from app.db.models.user import User
 from app.schemas.task import TaskCreate, TaskUpdate
 
 logger = get_logger(__name__)
@@ -29,7 +29,7 @@ class TaskService:
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user.id,
         )
-        member = (await session.exec(statement)).first()
+        member = (await session.execute(statement)).scalars().first()
         if not member and user.role != Role.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -86,7 +86,7 @@ class TaskService:
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user.id,
         )
-        if not (await session.exec(member_check)).first():
+        if not (await session.execute(member_check)).scalars().first():
             # Check if owner
             project = await session.get(Project, project_id)
             if not project or project.owner_id != user.id:
@@ -104,7 +104,7 @@ class TaskService:
 
         statement = statement.offset((page - 1) * limit).limit(limit)
 
-        result = await session.exec(statement)
+        result = (await session.execute(statement)).scalars()
         return result.all()
 
     async def get_task_by_id(
@@ -134,7 +134,7 @@ class TaskService:
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user.id,
         )
-        if (await session.exec(stat)).first():
+        if (await session.execute(stat)).scalars().first():
             return task
 
         raise HTTPException(

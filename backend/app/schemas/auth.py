@@ -1,9 +1,8 @@
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
-from app.models.enums import Role
+from app.db.models.enums import Role
 
 
 class UserCreate(BaseModel):
@@ -24,7 +23,7 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    id: Optional[UUID] = None
+    id: UUID | None = None
 
 
 class UserResponse(BaseModel):

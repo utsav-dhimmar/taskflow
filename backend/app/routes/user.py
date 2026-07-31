@@ -1,11 +1,11 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.main import get_session
-from app.models.enums import Role
-from app.models.user import User
+from app.db.models.enums import Role
+from app.db.models.user import User
 from app.routes.auth import get_current_user
 from app.schemas.auth import UserResponse
 from app.schemas.user import UserStatusUpdate, UserUpdate

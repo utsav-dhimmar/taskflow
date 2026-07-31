@@ -2,11 +2,11 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.main import get_session
-from app.models.enums import ProjectPriority, ProjectStatus
-from app.models.user import User
+from app.db.models.enums import ProjectPriority, ProjectStatus
+from app.db.models.user import User
 from app.routes.auth import get_current_user
 from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
 from app.services.task_service import TaskService

@@ -1,31 +1,18 @@
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.middleware import AuthMiddleware
-from app.db.main import engine, init_db
 from app.routes.auth import router as auth_router
 from app.routes.project import router as project_router
 from app.routes.task import router as task_router
 from app.routes.user import router as user_router
 from app.schemas.error import ErrorResponse
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("start")
-    await init_db()
-    yield
-    await engine.dispose()
-    print("end")
-
-
 app = FastAPI(
     title="TaskFlow API",
-    lifespan=lifespan,
+    # lifespan=lifespan,
     openapi_url="/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
