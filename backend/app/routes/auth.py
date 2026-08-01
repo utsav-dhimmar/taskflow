@@ -20,7 +20,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.schemas.error import ApiErrorResponse
-from app.services.user_service import user_service
+from app.services.user_service import UserServiceDep
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -50,12 +50,12 @@ async def get_current_user(
 )
 async def register(
     user_create: UserCreate,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    user_service: UserServiceDep,
 ):
     """
     Register a new user controller
     """
-    user = await user_service.create_user(session, user_create)
+    user = await user_service.create_user(user_create)
     celery_app.send_task(
         "app.worker.send_welcome_email", args=[user.email, user.full_name]
     )
@@ -75,12 +75,13 @@ async def register(
 async def login(
     user_login: UserLogin,
     session: Annotated[AsyncSession, Depends(get_session)],
+    user_service: UserServiceDep,
 ):
     """
     Login a user controller
     """
 
-    user = await user_service.login(session, user_login)
+    user = await user_service.login(user_login)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -148,6 +149,7 @@ async def login(
 async def refresh_token_endpoint(
     request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],
+    user_service: UserServiceDep,
 ):
     """
     Refresh a user the access token
@@ -177,7 +179,7 @@ async def refresh_token_endpoint(
     except InvalidTokenError:
         raise credentials_exception
 
-    user = await user_service.get_user_by_id(session, user_id)
+    user = await user_service.get_user_by_id(user_id)
     if user is None or user.refresh_token != refresh_token:
         raise credentials_exception
 

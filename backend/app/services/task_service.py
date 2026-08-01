@@ -1,12 +1,14 @@
 from collections.abc import Sequence
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.celery_app import celery_app
 from app.core.logging import get_logger
+from app.db.main import get_session
 from app.db.models.enums import ProjectPriority, ProjectStatus, Role
 from app.db.models.project import Project, ProjectMember
 from app.db.models.task import Task
@@ -17,9 +19,11 @@ logger = get_logger(__name__)
 
 
 class TaskService:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
     async def create_task(
         self,
-        session: AsyncSession,
         project_id: UUID,
         task_create: TaskCreate,
         user: User,
@@ -29,7 +33,7 @@ class TaskService:
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user.id,
         )
-        member = (await session.execute(statement)).scalars().first()
+        member = (await self.session.execute(statement)).scalars().first()
         if not member and user.role != Role.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -42,9 +46,9 @@ class TaskService:
                 user_id=user.id,
                 role=Role.USER,
             )
-            session.add(project_member)
-            await session.commit()
-            await session.refresh(project_member)
+            self.session.add(project_member)
+            await self.session.commit()
+            await self.session.refresh(project_member)
 
         db_task = Task(
             project_id=project_id,
@@ -56,13 +60,13 @@ class TaskService:
             due_datetime=task_create.due_datetime,
             created_by=user.id,
         )
-        session.add(db_task)
-        await session.commit()
-        await session.refresh(db_task)
+        self.session.add(db_task)
+        await self.session.commit()
+        await self.session.refresh(db_task)
 
         if db_task.assigned_to:
-            assigned_user = await session.get(User, db_task.assigned_to)
-            project = await session.get(Project, project_id)
+            assigned_user = await self.session.get(User, db_task.assigned_to)
+            project = await self.session.get(Project, project_id)
             if assigned_user and project:
                 celery_app.send_task(
                     "app.worker.send_task_assigned_email",
@@ -73,7 +77,6 @@ class TaskService:
 
     async def get_tasks_by_project(
         self,
-        session: AsyncSession,
         project_id: UUID,
         user: User,
         status_filter: ProjectStatus | None = None,
@@ -86,9 +89,9 @@ class TaskService:
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user.id,
         )
-        if not (await session.execute(member_check)).scalars().first():
+        if not (await self.session.execute(member_check)).scalars().first():
             # Check if owner
-            project = await session.get(Project, project_id)
+            project = await self.session.get(Project, project_id)
             if not project or project.owner_id != user.id:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -104,13 +107,11 @@ class TaskService:
 
         statement = statement.offset((page - 1) * limit).limit(limit)
 
-        result = (await session.execute(statement)).scalars()
+        result = (await self.session.execute(statement)).scalars()
         return result.all()
 
-    async def get_task_by_id(
-        self, session: AsyncSession, task_id: UUID, user: User
-    ) -> Task | None:
-        task = await session.get(Task, task_id)
+    async def get_task_by_id(self, task_id: UUID, user: User) -> Task | None:
+        task = await self.session.get(Task, task_id)
         if not task:
             return None
 
@@ -125,7 +126,7 @@ class TaskService:
         project_id = task.project_id
 
         # Check owner
-        project = await session.get(Project, project_id)
+        project = await self.session.get(Project, project_id)
         if project and project.owner_id == user.id:
             return task
 
@@ -134,7 +135,7 @@ class TaskService:
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user.id,
         )
-        if (await session.execute(stat)).scalars().first():
+        if (await self.session.execute(stat)).scalars().first():
             return task
 
         raise HTTPException(
@@ -143,12 +144,11 @@ class TaskService:
 
     async def update_task(
         self,
-        session: AsyncSession,
         task_id: UUID,
         task_update: TaskUpdate,
         user: User,
     ) -> Task:
-        task = await self.get_task_by_id(session, task_id, user)
+        task = await self.get_task_by_id(task_id, user)
 
         if not task:  # Should be caught by get_task_by_id or return None
             raise HTTPException(status_code=404, detail="Task not found")
@@ -157,19 +157,17 @@ class TaskService:
         for key, value in task_data.items():
             setattr(task, key, value)
 
-        session.add(task)
-        await session.commit()
-        await session.refresh(task)
+        self.session.add(task)
+        await self.session.commit()
+        await self.session.refresh(task)
         return task
 
-    async def delete_task(
-        self, session: AsyncSession, task_id: UUID, user: User
-    ) -> bool:
-        task = await self.get_task_by_id(session, task_id, user)
+    async def delete_task(self, task_id: UUID, user: User) -> bool:
+        task = await self.get_task_by_id(task_id, user)
         if not task:
             return False
 
-        project = await session.get(Project, task.project_id)
+        project = await self.session.get(Project, task.project_id)
         is_owner = project.owner_id == user.id if project else False
         is_creator = task.created_by == user.id
 
@@ -179,7 +177,17 @@ class TaskService:
                 detail="Only the task creator or project owner can delete this task",
             )
 
-        await session.delete(task)
-        await session.commit()
+        await self.session.delete(task)
+        await self.session.commit()
         logger.info(f"Task deleted: {task.id}")
         return True
+
+
+def get_task_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> TaskService:
+    return TaskService(session)
+
+
+task_service = get_task_service
+TaskServiceDep = Annotated[TaskService, Depends(get_task_service)]

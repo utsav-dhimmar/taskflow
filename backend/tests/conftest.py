@@ -103,7 +103,7 @@ def db_session() -> Generator[AsyncSession, None, None]:
 
 
 @pytest.fixture
-def mock_celery():
+def mock_celery(autouse=True):
     """Mock Celery send_task to prevent sending actual background tasks."""
     with patch("app.routes.auth.celery_app.send_task") as mock_send:
         yield mock_send

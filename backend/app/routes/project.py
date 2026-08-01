@@ -16,10 +16,9 @@ from app.schemas.project_member import (
     ProjectMemberResponse,
     ProjectMemberUpdate,
 )
-from app.services.project_service import ProjectService
+from app.services.project_service import ProjectServiceDep
 
 router = APIRouter(prefix="/projects", tags=["projects"])
-project_service = ProjectService()
 
 
 @router.post(
@@ -29,6 +28,7 @@ async def create_project(
     project_create: ProjectCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    project_service: ProjectServiceDep,
 ):
     """
     Create a new project
@@ -39,20 +39,19 @@ async def create_project(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can create projects",
         )
-    return await project_service.create_project(
-        session, project_create, current_user
-    )
+    return await project_service.create_project(project_create, current_user)
 
 
 @router.get("/", response_model=list[ProjectResponse])
 async def list_projects(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    project_service: ProjectServiceDep,
 ):
     """
     List all projects for the current user
     """
-    return await project_service.get_projects_for_user(session, current_user)
+    return await project_service.get_projects_for_user(current_user)
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
@@ -60,10 +59,9 @@ async def read_project(
     project_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    project_service: ProjectServiceDep,
 ):
-    project = await project_service.get_project_by_id(
-        session, project_id, current_user
-    )
+    project = await project_service.get_project_by_id(project_id, current_user)
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -78,9 +76,10 @@ async def update_project(
     project_update: ProjectUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    project_service: ProjectServiceDep,
 ):
     project = await project_service.update_project(
-        session, project_id, project_update, current_user
+        project_id, project_update, current_user
     )
     if not project:
         raise HTTPException(
@@ -95,10 +94,9 @@ async def delete_project(
     project_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    project_service: ProjectServiceDep,
 ):
-    success = await project_service.delete_project(
-        session, project_id, current_user
-    )
+    success = await project_service.delete_project(project_id, current_user)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -107,13 +105,16 @@ async def delete_project(
 
 
 async def check_project_admin_permission(
-    session: AsyncSession, project_id: UUID, user_id: UUID
+    session: AsyncSession,
+    project_id: UUID,
+    user_id: UUID,
+    project_service: ProjectServiceDep,
 ):
     """
     Check if user is Owner or Admin of the project.
     """
     project = await project_service.get_project_by_id(
-        session, project_id, User(id=user_id)
+        project_id, User(id=user_id)
     )
 
     project = await session.get(Project, project_id)
@@ -145,13 +146,16 @@ async def add_project_member_endpoint(
     member_create: ProjectMemberCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    project_service: ProjectServiceDep,
 ):
     """
     Add a new member to the project
     """
-    await check_project_admin_permission(session, project_id, current_user.id)
+    await check_project_admin_permission(
+        session, project_id, current_user.id, project_service
+    )
     return await project_service.add_project_member(
-        session, project_id, member_create.user_id, member_create.role
+        project_id, member_create.user_id, member_create.role
     )
 
 
@@ -160,18 +164,17 @@ async def list_project_members(
     project_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    project_service: ProjectServiceDep,
 ):
     """
     List all members of the project
     """
     # Verify user can access project
-    project = await project_service.get_project_by_id(
-        session, project_id, current_user
-    )
+    project = await project_service.get_project_by_id(project_id, current_user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    return await project_service.get_project_members(session, project_id)
+    return await project_service.get_project_members(project_id)
 
 
 @router.patch(
@@ -183,13 +186,16 @@ async def update_project_member_role(
     member_update: ProjectMemberUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    project_service: ProjectServiceDep,
 ):
     """
     Update the project member role
     """
-    await check_project_admin_permission(session, project_id, current_user.id)
+    await check_project_admin_permission(
+        session, project_id, current_user.id, project_service
+    )
     member = await project_service.update_project_member(
-        session, project_id, user_id, member_update.role
+        project_id, user_id, member_update.role
     )
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
@@ -204,13 +210,14 @@ async def remove_project_member(
     user_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    project_service: ProjectServiceDep,
 ):
     """
     Remove the project member from the project
     """
-    await check_project_admin_permission(session, project_id, current_user.id)
-    success = await project_service.remove_project_member(
-        session, project_id, user_id
+    await check_project_admin_permission(
+        session, project_id, current_user.id, project_service
     )
+    success = await project_service.remove_project_member(project_id, user_id)
     if not success:
         raise HTTPException(status_code=404, detail="Member not found")

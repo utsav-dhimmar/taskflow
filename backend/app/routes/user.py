@@ -9,10 +9,9 @@ from app.db.models.user import User
 from app.routes.auth import get_current_user
 from app.schemas.auth import UserResponse
 from app.schemas.user import UserStatusUpdate, UserUpdate
-from app.services.user_service import UserService
+from app.services.user_service import UserServiceDep
 
 router = APIRouter(prefix="/users", tags=["users"])
-user_service = UserService()
 
 
 def check_admin_role(user: User):
@@ -35,8 +34,9 @@ async def update_user_me(
     user_update: UserUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    user_service: UserServiceDep,
 ):
-    return await user_service.update_user(session, current_user, user_update)
+    return await user_service.update_user(current_user, user_update)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -44,9 +44,10 @@ async def read_user_by_id(
     user_id: str,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    user_service: UserServiceDep,
 ):
     check_admin_role(current_user)
-    user = await user_service.get_user_by_id(session, user_id)
+    user = await user_service.get_user_by_id(user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -61,14 +62,13 @@ async def update_user_status(
     status_update: UserStatusUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    user_service: UserServiceDep,
 ):
     check_admin_role(current_user)
-    user = await user_service.get_user_by_id(session, user_id)
+    user = await user_service.get_user_by_id(user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    return await user_service.update_user_status(
-        session, user, status_update.is_active
-    )
+    return await user_service.update_user_status(user, status_update.is_active)
